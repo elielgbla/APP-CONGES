@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portail RH - Gestion des Congés</title>
+
+    <link rel="stylesheet" href="<?php echo e(asset('css/bootstrap.min.css')); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('css/all.min.css')); ?>">
+
+    <script src="<?php echo e(asset('js/chart.umd.js')); ?>"></script>
+
+    <style>
+        /* Forcer l'affichage du menu déroulant au survol de la souris */
+        .navbar-nav .nav-item.dropdown:hover .dropdown-menu {
+            display: block;
+            margin-top: 0; /* Aligne proprement le menu sous le bouton */
+            animation: fadeIn 0.2s ease-in-out; /* Effet visuel fluide */
+        }
+
+        /* Petit effet d'apparition doux */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        :root {
+            --primary-green: #2e7d32;
+            --corporate-brown: #5d4037;
+            --bg-cream: #fcfbfa;
+        }
+        body { background-color: var(--bg-cream); font-family: sans-serif; }
+        .bg-marron { background-color: #4a3b32 !important; }
+        .text-brown { color: var(--corporate-brown); }
+        .card-stat { border: none; border-left: 5px solid var(--primary-green); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-marron shadow-sm mb-4">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold" href="<?php echo e(route('dashboard')); ?>">
+                <i class="fas fa-leaf text-success me-2"></i>SOGETHO-SA
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navMain">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-3">
+
+                    
+                    
+                    
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo e(Request::routeIs('dashboard') ? 'active' : ''); ?>" href="<?php echo e(route('dashboard')); ?>">
+                            <i class="fa-solid fa-chart-pie me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo e(Request::routeIs('demandes.*') ? 'active' : ''); ?>" href="<?php echo e(route('demandes.index')); ?>">
+                            <i class="fa-solid fa-file-signature me-1"></i> Mes Demandes
+                        </a>
+                    </li>
+
+                    
+                    
+                    
+                    <?php if(Auth::check() && in_array(Auth::user()->code_poste, ['RESPONSABLE', 'RH'])): ?>
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo e(Request::routeIs('validations.*') ? 'active' : ''); ?>" href="<?php echo e(route('validations.index')); ?>">
+                                <i class="fas fa-stamp me-1 text-warning"></i> Validations en attente
+                            </a>
+                        </li>
+                    <?php endif; ?>
+
+                    
+                    
+                    
+                    <?php if(Auth::check() && in_array(Auth::user()->code_poste, ['RH', 'ADMIN'])): ?>
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo e(Request::routeIs('employes.*') ? 'active' : ''); ?>" href="<?php echo e(route('employes.index')); ?>">
+                                <i class="fa-solid fa-users me-1"></i> Personnel
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo e(Request::routeIs('plannings.*') ? 'active' : ''); ?>" href="<?php echo e(route('plannings.index')); ?>">
+                                <i class="fa-solid fa-calendar-days me-1"></i> Plannings Horaires
+                            </a>
+                        </li>
+                    <?php endif; ?>
+
+                    
+                    
+                    
+                    <?php if(Auth::check() && Auth::user()->code_poste === 'ADMIN'): ?>
+                        
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownDonneesRef" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-database me-1 text-success"></i> Tables de Référence
+                            </a>
+                            <ul class="dropdown-menu shadow" aria-labelledby="navbarDropdownDonneesRef">
+                                <li><h6 class="dropdown-header text-uppercase small fw-bold">Configurations Métier</h6></li>
+                                <li>
+                                    <a class="dropdown-item small" href="<?php echo e(route('type-permissions.index')); ?>">
+                                        <i class="fa-solid fa-list-check me-2 text-muted"></i> Types de Permissions
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item small" href="<?php echo e(route('services.index')); ?>">
+                                        <i class="fa-solid fa-layer-group me-2 text-muted"></i> Services / Directions
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item small" href="<?php echo e(route('postes.index')); ?>">
+                                        <i class="fa-solid fa-briefcase me-2 text-muted"></i> Postes & Fonctions
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header text-uppercase small fw-bold">Traçabilité & Historiques</h6></li>
+                                <li>
+                                    <a class="dropdown-item small" href="<?php echo e(route('historique_postes.index')); ?>">
+                                        <i class="fa-solid fa-timeline me-2 text-muted"></i> Historique & Mutations
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item small" href="<?php echo e(route('contacts.index')); ?>">
+                                        <i class="fa-solid fa-address-book me-2 text-muted"></i> Répertoire Contacts
+                                    </a>
+                                </li>
+                                
+                               <li class="nav-item <?php echo e(request()->routeIs('residences.*') ? 'active' : ''); ?>">
+                                    <a class="nav-link" href="<?php echo e(route('residences.index')); ?>">
+                                    <i class="fas fa-fw fa-map-marked-alt"></i>
+                                           <span>Historique Résidences</span>
+                                    </a>
+                               </li>
+                            </ul>
+                        </li>
+
+                        
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo e(Request::routeIs('journalisation.*') ? 'active' : ''); ?>" href="<?php echo e(route('journalisation.index')); ?>">
+                                <i class="fa-solid fa-history me-1"></i> Journaux (Logs)
+                            </a>
+                        </li>
+                    <?php endif; ?>
+
+                </ul>
+
+                
+                <?php if(Auth::check()): ?>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle bg-white bg-opacity-10 rounded px-3 text-white" href="#" id="profDrop" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                             <i class="fas fa-user-circle me-2"></i><?php echo e(Auth::user()->nom); ?> <?php echo e(Auth::user()->prenom); ?>
+
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow mt-2" aria-labelledby="profDrop">
+                            <div class="px-3 py-1 small text-muted border-bottom">
+                                Matricule : <strong><?php echo e(Auth::user()->matricule_employe); ?></strong>
+                            </div>
+                            <li>
+                                <a class="dropdown-item py-2" href="<?php echo e(route('password.edit')); ?>">
+                                    <i class="fas fa-id-card me-2 text-muted"></i>Mon Profil / Sécurité
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                               <a class="dropdown-item" href="<?php echo e(route('logout')); ?>"
+                                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                 <i class="fa-solid fa-right-from-bracket me-2 text-danger"></i> Déconnexion
+                               </a>
+
+                               <form id="logout-form" action="<?php echo e(route('logout')); ?>" method="POST" class="d-none">
+                                   <?php echo csrf_field(); ?>
+                               </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+                <?php endif; ?>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container-fluid px-4">
+        <?php echo $__env->yieldContent('content'); ?>
+    </main>
+
+    <script src="<?php echo e(asset('js/bootstrap.bundle.min.js')); ?>"></script>
+    <script>
+        function ouvrirFenetreImpression(url) {
+            const largeur = 900;
+            const hauteur = 700;
+            const gauche = (screen.width - largeur) / 2;
+            const haut = (screen.height - hauteur) / 2;
+
+            const options = `width=${largeur},height=${hauteur},left=${gauche},top=${haut},scrollbars=yes,toolbar=no,status=no,location=no,menubar=no`;
+            const fenetre = window.open(url, 'Impression_SOGETHO', options);
+
+            if (fenetre) {
+                fenetre.focus();
+            } else {
+                alert('Veuillez autoriser les fenêtres pop-up pour pouvoir imprimer les documents.');
+            }
+        }
+    </script>
+</body>
+</html>
+<?php /**PATH C:\wamp64\www\APP_CONGE\resources\views/layouts/app.blade.php ENDPATH**/ ?>
