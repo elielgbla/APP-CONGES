@@ -9,7 +9,6 @@ class Validation extends Model
 {
     /**
      * Le nom de la table associée dans la base de données.
-     * Conforme à ta structure SQL (validations).
      */
     protected $table = 'validation_permission';
 
@@ -29,13 +28,12 @@ class Validation extends Model
     public $incrementing = false;
 
     /**
-     * Désactivé car tu stockes la date dans la colonne personnalisée 'date_decision'.
+     * Désactivé car la date est stockée dans la colonne personnalisée 'date_decision'.
      */
     public $timestamps = false;
 
     /**
      * Attributs assignables en masse.
-     * Intègre désormais la colonne 'signature' (chemin du fichier sur le PC).
      */
     protected $fillable = [
         'code_validation',
@@ -50,7 +48,6 @@ class Validation extends Model
 
     /**
      * Cast des types natifs.
-     * Alignement sur le tinyint de la base de données pour niveau_validation.
      */
     protected $casts = [
         'date_decision' => 'date',
@@ -74,7 +71,7 @@ class Validation extends Model
             }
 
             // Sécurité Workflow : Si la valeur envoyée du contrôleur est 'approuver',
-            // on la convertit en 'valide' pour correspondre à ton ENUM MySQL
+            // on la convertit en 'valide' pour correspondre à l'ENUM MySQL
             if ($validation->decision === 'approuver') {
                 $validation->decision = 'valide';
             } elseif ($validation->decision === 'rejeter') {
@@ -83,7 +80,7 @@ class Validation extends Model
         });
 
         static::updating(function ($validation) {
-            // Même sécurité de conversion pour les mises à jour (updateOrCreate)
+            // Même sécurité de conversion pour les mises à jour
             if ($validation->decision === 'approuver') {
                 $validation->decision = 'valide';
             } elseif ($validation->decision === 'rejeter') {

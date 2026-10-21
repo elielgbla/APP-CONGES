@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('contact', function (Blueprint $table) {
             $table->string('code_contact', 10)->primary();
-            $table->string('numero_contact', 20);
+            $table->string('numero_contact', (50);
             $table->string('matricule_employe', 20);
             $table->string('code_type_contact', 10);
 

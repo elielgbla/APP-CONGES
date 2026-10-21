@@ -16,11 +16,20 @@ class PlanningController extends Controller
     /**
      * Sécurisation de l'accès : Restreint à l'ADMIN uniquement
      */
-    public function __construct()
+public static function middleware(): array
     {
-        if (Auth::check() && Auth::user()->code_poste !== 'ADMIN') {
-            abort(403, "Action non autorisée. Réservé à l'administrateur.");
-        }
+        return [
+            new Middleware(function ($request, $next) {
+                $user = Auth::user();
+
+                // Vérification stricte du rôle/poste de l'utilisateur connecté
+                if (!$user || !in_array($user->code_poste, ['ADMIN', 'RH'])) {
+                    abort(403, "Action non autorisée : Droits d'accès insuffisants.");
+                }
+
+                return $next($request);
+            }),
+        ];
     }
 
     /**

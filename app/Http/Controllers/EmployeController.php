@@ -68,8 +68,9 @@ class EmployeController extends Controller implements HasMiddleware
         $services = DB::table('service')->orderBy('libelle_service', 'asc')->get();
         $categories = DB::table('categorie')->orderBy('libelle_categorie', 'asc')->get();
         $genres = DB::table('genre')->orderBy('libelle_genre', 'asc')->get();
+        $localites = DB::table('localite')->orderBy('libelle_localite', 'asc')->get();
 
-        return view('employes.create', compact('genres', 'postes', 'services', 'categories'));
+        return view('employes.create', compact('genres', 'postes', 'services', 'categories', 'localites'));
     }
 
     /**
@@ -139,15 +140,17 @@ class EmployeController extends Controller implements HasMiddleware
 
         $categories = DB::table('categorie')->orderBy('libelle_categorie', 'asc')->get();
         $genres = DB::table('genre')->orderBy('libelle_genre', 'asc')->get();
-
-        return view('employes.edit', compact('employe', 'genres', 'categories'));
+        $localites = DB::table('localite')->orderBy('libelle_localite', 'asc')->get();
+        
+        return view('employes.edit', compact('employe', 'genres', 'categories', 'localites'));
     }
 
     /**
      * Mise à jour de la fiche de l'employé
      */
     public function update(Request $request, string $matricule_employe)
-    {
+    {   
+        $localites = DB::table('localite')->pluck('code_localite')->toArray();
         $employe = Employe::where('matricule_employe', $matricule_employe)->firstOrFail();
 
         $request->validate([

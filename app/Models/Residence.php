@@ -2,47 +2,32 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class Residence extends Pivot
+class Residence extends Model
 {
+    use HasFactory;
+
     // Nom exact de la table dans la base de données
     protected $table = 'residence';
 
-    // Nom de la clé primaire
+    // Clé primaire de la table
     protected $primaryKey = 'code_residence';
 
-    // On désactive l'auto-incrément car c'est une chaîne de caractères
-    public $incrementing = false;
-    protected $keyType = 'string';
+    // Clé auto-incrémentée numérique
+    public $incrementing = true;
+    protected $keyType = 'int';
 
+    // Désactivation des colonnes d'horodatage created_at / updated_at
+    public $timestamps = false;
+
+    // Attributs modifiables (sans code_residence qui est géré automatiquement)
     protected $fillable = [
-        'code_residence',
         'matricule_employe',
-        'adresse',
         'code_localite',
+        'adresse',
     ];
-
-    /**
-     * Le "booted" method pour intercepter la création et générer le code automatiquement.
-     */
-    protected static function booted()
-    {
-        static::creating(function ($residence) {
-            // Extraction des 3 premières lettres en majuscules (ex: 'residence' -> 'RES')
-            $prefixe = strtoupper(substr($residence->getTable(), 0, 3));
-
-            // CORRECTION INTELEPHENSE : On passe '*' en argument pour valider la signature attendue par l'éditeur
-            $totalElements = static::count('*');
-
-            $nouvelIndex = $totalElements + 1;
-
-            // Formatage de l'index sur 3 chiffres (ex: 001, 012)
-            $compteurFormate = str_pad($nouvelIndex, 3, '0', STR_PAD_LEFT);
-
-            $residence->code_residence = $prefixe . $compteurFormate;
-        });
-    }
 
     /**
      * Relation : Une résidence appartient à un employé.

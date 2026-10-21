@@ -11,7 +11,7 @@ class EmployeTestSeeder extends Seeder
     {
         // Désactivation des contraintes de clés étrangères pour autoriser l'insertion propre
         DB::statement('SET FOREIGN_KEY_CHECKS = 0;');
-
+        
         // Optionnel : Nettoyage préalable des tables secondaires pour éviter les doublons
         DB::table('genre')->truncate();
         DB::table('categorie')->truncate();
@@ -19,6 +19,7 @@ class EmployeTestSeeder extends Seeder
         DB::table('localite')->truncate();
         DB::table('service')->truncate();
         DB::table('type_permission')->truncate();
+        DB::table('type_contact')->truncate();
 
         // 1. Insertion des Genres
         DB::table('genre')->insert([
@@ -61,6 +62,20 @@ class EmployeTestSeeder extends Seeder
         DB::table('type_permission')->insert([
             ['code_type_permission' => 'CONGE_AN', 'libelle_type_permission' => 'Congé Annuel'],
             ['code_type_permission' => 'PERM_EXC', 'libelle_type_permission' => 'Permission Exceptionnelle'],
+        ]);
+
+        // 7. Insertion des Types de Contacts (Dictionnaire de référence)
+        DB::table('type_contact')->insert([
+            ['code_type_contact' => 'TEL_PERSO',       'libelle_type_contact' => 'Téléphone Mobile Personnel',       'description' => 'Numéro de téléphone portable personnel de l\'employé'],
+            ['code_type_contact' => 'TEL_PRO',         'libelle_type_contact' => 'Téléphone Professionnel / Flotte', 'description' => 'Ligne professionnelle ou flotte d\'entreprise octroyée'],
+            ['code_type_contact' => 'TEL_FIXE',        'libelle_type_contact' => 'Téléphone Fixe Domicile',           'description' => 'Ligne téléphonique fixe du domicile'],
+            ['code_type_contact' => 'WHATSAPP',        'libelle_type_contact' => 'Numéro WhatsApp',                  'description' => 'Numéro joignable sur WhatsApp pour les urgences ou notifications'],
+            ['code_type_contact' => 'EMAIL_PERSO',     'libelle_type_contact' => 'Email Personnel',                  'description' => 'Adresse électronique personnelle pour l\'envoi des bulletins/notifications'],
+            ['code_type_contact' => 'EMAIL_PRO',       'libelle_type_contact' => 'Email Professionnel',              'description' => 'Adresse électronique d\'entreprise officielle'],
+            ['code_type_contact' => 'URGENCE_PROCHE',  'libelle_type_contact' => 'Contact d\'Urgence (Famille/Proche)','description' => 'Personne à contacter en cas d\'urgence médicale ou accident'],
+            ['code_type_contact' => 'URGENCE_MEDECIN', 'libelle_type_contact' => 'Médecin / Clinique Traitant(e)',   'description' => 'Coordonnées du médecin traitant ou de la clinique de référence'],
+            ['code_type_contact' => 'TUTEUR_LEGAL',    'libelle_type_contact' => 'Tuteur / Représentant Légal',      'description' => 'Personne garante ou représentant légal'],
+            ['code_type_contact' => 'LINKEDIN',        'libelle_type_contact' => 'Profil LinkedIn',                  'description' => 'Lien vers le profil professionnel LinkedIn'],
         ]);
 
         // Réactivation des contraintes de clés étrangères après l'exécution

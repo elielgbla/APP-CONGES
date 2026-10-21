@@ -139,6 +139,12 @@
                                     </a>
                                 </li>
                                 <li>
+                                    <a href="{{ route('localites.index') }}" class="flex items-center p-2 {{ request()->routeIs('localites.*') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-900' }} rounded-lg hover:bg-gray-100">
+                                       <i class="fa-solid fa-location-dot"></i>
+                                           <span class="ms-3">Gestion Localités</span>
+                                     </a>
+                                </li>
+                                <li>
                                     <a class="dropdown-item small {{ Request::routeIs('residences.*') ? 'active bg-light text-dark' : '' }}" href="{{ route('residences.index') }}">
                                         <i class="fa-solid fa-map-location-dot me-2 text-muted"></i> Historique Résidences
                                     </a>
@@ -154,6 +160,8 @@
                                 </li>
                             </ul>
                         </li>
+                      
+        
 
                         <li class="nav-item">
                             <a class="nav-link {{ Request::routeIs('journalisation.*') ? 'active' : '' }}" href="{{ route('journalisation.index') }}">

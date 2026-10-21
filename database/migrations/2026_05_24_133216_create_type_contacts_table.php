@@ -10,7 +10,8 @@ return new class extends Migration
     {
         Schema::create('type_contact', function (Blueprint $table) {
             $table->string('code_type_contact', 10)->primary();
-            $table->string('libelle_type_contact', 50);
+            $table->string('libelle_type_contact', 100);
+            $table->string('description', 255)->nullable();
         });
     }
 

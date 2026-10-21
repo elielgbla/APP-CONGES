@@ -111,13 +111,7 @@
                             @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
-                        {{-- Téléversement Photo --}}
-                        <div class="mb-4">
-                            <label for="photo" class="form-label fw-bold text-secondary text-xs text-uppercase">Changer ma photo de profil</label>
-                            <input type="file" class="form-control @error('photo') is-invalid @enderror" id="photo" name="photo" accept="image/*">
-                            <div class="form-text text-muted small"><i class="fas fa-info-circle text-info me-1"></i>Formats acceptés : JPG, JPEG, PNG. Taille max : 2 Mo.</div>
-                            @error('photo') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
+
 
                         {{-- BLOC SÉCURITÉ : MOT DE PASSE --}}
                         <div class="card bg-light border p-3 mb-4">

@@ -34,12 +34,12 @@ class DashboardController extends Controller
         $stats['mes_demandes_compte'] = Demande::where('matricule_employe', $user->matricule_employe)->count();
 
         // 3. Gestion du circuit des 4 niveaux de validation
-        $historiqueVisasRoles = ['RESP_SERVI', 'RH', 'DIR_EXPLOI', 'DIR_GENERA'];
+        $historiqueVisasRoles = ['RESP_SERVI', 'RESPONSABLE', 'RH', 'DIR_EXPLOI', 'DIR_EXPLOITATION', 'DIR_GENERA', 'DIR_GENERAL'];
 
-        if (in_array($user->code_poste, $historiqueVisasRoles) || $user->code_poste === 'ADMIN') {
+        if (in_array($user->code_poste, $historiqueVisasRoles)) {
             $queryValidation = Demande::query();
 
-            if ($user->code_poste === 'RESP_SERVI') {
+            if (in_array($user->code_poste, ['RESP_SERVI', 'RESPONSABLE'])) {
                 // Le responsable ne voit que les demandes N1 de SON propre service
                 $queryValidation->where('statut_demande', 'en_attente_n1')
                     ->whereHas('employe.historiquePostes', function ($q) use ($userService) {
@@ -47,10 +47,12 @@ class DashboardController extends Controller
                           ->whereNull('historique_poste.date_fin');
                     });
             } elseif ($user->code_poste === 'RH') {
+                // Le rôle RH traite uniquement les demandes N2 des agents RH.
+                // Une demande créée par le responsable RH auto-valide déjà N1 et N2.
                 $queryValidation->where('statut_demande', 'en_attente_n2');
-            } elseif ($user->code_poste === 'DIR_EXPLOI') {
+            } elseif (in_array($user->code_poste, ['DIR_EXPLOI', 'DIR_EXPLOITATION'])) {
                 $queryValidation->where('statut_demande', 'en_attente_n3');
-            } elseif ($user->code_poste === 'DIR_GENERA') {
+            } elseif (in_array($user->code_poste, ['DIR_GENERA', 'DIR_GENERAL'])) {
                 $queryValidation->where('statut_demande', 'en_attente_n4');
             }
 

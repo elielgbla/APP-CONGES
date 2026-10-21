@@ -12,6 +12,7 @@ use App\Http\Controllers\JournalisationController;
 use App\Http\Controllers\TypePermissionController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\PosteController;
+use App\Http\Controllers\LocaliteController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\HistoriquePosteController;
 use App\Http\Controllers\PlanningController;
@@ -95,12 +96,12 @@ Route::middleware('reseau.local')->group(function () {
             'demandes' => 'code_demande'
         ]);
 
-        // Remplacer par :
         Route::post('/demandes/{code_demande}/valider', [DemandeController::class, 'valider'])->name('demandes.valider');
 
         // Circuit de validation des permissions (Visa)
         Route::get('/validations', [DemandeController::class, 'index'])->name('validations.index');
-      
+        Route::post('/validations', [ValidationController::class, 'store'])->name('validations.store');
+
 
         // ============================================
         // PARAMÉTRAGES & PARAMÈTRES GLOBAUX (Accessibles aux connectés)
@@ -144,6 +145,11 @@ Route::middleware('reseau.local')->group(function () {
             Route::put('/{code_residence}', [ResidenceController::class, 'update'])->name('update');
             Route::delete('/{code_residence}', [ResidenceController::class, 'destroy'])->name('destroy');
         });
+
+        // Module Gestion des Localités (Réservé aux ADMIN)
+        // Assurez-vous d'avoir un Gate ou middleware pour 'est-admin'
+        Route::resource('localites', LocaliteController::class)->parameters(['localite' => 'code_localite' ]);
+
 
         // ============================================
         // SÉCURITÉ AUDIT : JOURNALISATION (Espace RH / Administrateur)

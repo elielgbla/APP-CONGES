@@ -113,16 +113,17 @@ class Employe extends Authenticatable
     /* RELATIONS PLUSIEURS-À-PLUSIEURS                                            */
     /* -------------------------------------------------------------------------- */
 
-    public function localites(): BelongsToMany
+    public function localites()
     {
-        return $this->belongsToMany(Localite::class, 'residence', 'matricule_employe', 'code_localite')
-            ->using(Residence::class)
-            ->withPivot('code_residence', 'adresse')
-            ->withTimestamps();
+        return $this->belongsToMany(
+            Localite::class,
+            'residence',
+            'matricule_employe',
+            'code_localite'
+        )->withPivot(['code_residence', 'adresse']);
     }
-
     /* -------------------------------------------------------------------------- */
-    /* NOUVELLES MÉTHODES DE CONTRÔLE D'ACCÈS (NETTOYÉES & HARMONISÉES)          */
+    /* MÉTHODES DE CONTRÔLE D'ACCÈS ET ACCESSEURS                                 */
     /* -------------------------------------------------------------------------- */
 
     /**
@@ -140,12 +141,11 @@ class Employe extends Authenticatable
      */
     public function poste()
     {
-        // On s'appuie directement sur l'affectation active pour récupérer le poste
         return $this->hasOne(HistoriquePoste::class, 'matricule_employe', 'matricule_employe')
             ->whereNull('date_fin')
             ->latest('date_debut')
             ->join('poste', 'historique_poste.code_poste', '=', 'poste.code_poste')
-            ->select('poste.*', 'historique_poste.matricule_employe'); // On garde la clé pour l'association Eloquent
+            ->select('poste.*', 'historique_poste.matricule_employe');
     }
 
     /**
@@ -153,22 +153,45 @@ class Employe extends Authenticatable
      */
     public function service()
     {
-        // On s'appuie directement sur l'affectation active pour récupérer le service
         return $this->hasOne(HistoriquePoste::class, 'matricule_employe', 'matricule_employe')
             ->whereNull('date_fin')
             ->latest('date_debut')
             ->join('service', 'historique_poste.code_service', '=', 'service.code_service')
-            ->select('service.*', 'historique_poste.matricule_employe'); // On garde la clé pour l'association Eloquent
+            ->select('service.*', 'historique_poste.matricule_employe');
     }
 
     /**
      * Accesseur Dynamique : $user->code_poste
      */
-    public function getCodePosteAttribute()
+    public function getCodePosteAttribute(): string
     {
-        // On passe par la relation affectationActuelle déjà existante pour ne pas surcharger la BD
         $actuel = $this->affectationActuelle;
         return $actuel ? $actuel->code_poste : 'EMPLOYE';
+    }
+
+    /**
+     * Accesseur Dynamique Sécurisé : $user->code_service
+     */
+    public function getCodeServiceAttribute(): ?string
+    {
+        $actuel = $this->affectationActuelle;
+        return $actuel ? $actuel->code_service : null;
+    }
+
+    /**
+     * Alias de compatibilité ascendante pour le Workflow et Services : $user->code_poste_actif
+     */
+    public function getCodePosteActifAttribute(): string
+    {
+        return $this->code_poste;
+    }
+
+    /**
+     * Alias de compatibilité ascendante pour le Workflow et Services : $user->code_service_actif
+     */
+    public function getCodeServiceActifAttribute(): ?string
+    {
+        return $this->code_service;
     }
 
     /**
@@ -188,18 +211,19 @@ class Employe extends Authenticatable
         return $actuel && $actuel->poste && $actuel->poste->acces_journalisation == 1;
     }
 
-    // Dans ton modèle Employe.php
-public function estAdminOuRh(): bool
-{
-    // Récupère le poste actuel de l'agent
-    $posteActuel = $this->historiquePostes()->whereNull('date_fin')->first();
-    
-    if (!$posteActuel) {
-        return false;
-    }
+    /**
+     * Détermine si l'utilisateur est Admin ou RH
+     */
+    public function estAdminOuRh(): bool
+    {
+        $posteActuel = $this->historiquePostes()->whereNull('date_fin')->first();
+        
+        if (!$posteActuel) {
+            return false;
+        }
 
-    return in_array(strtoupper($posteActuel->code_poste), ['ADMIN', 'RH']);
-}
+        return in_array(strtoupper($posteActuel->code_poste), ['ADMIN', 'RH']);
+    }
 
     /**
      * Vérifie si l'employé est responsable / manager

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Carbon\Carbon;
 
 class Demande extends Model
 {
@@ -14,7 +15,7 @@ class Demande extends Model
     protected $table = 'demande';
 
     /**
-     * La clé primaire associée à la table (Conforme au MLD).
+     * La clé primaire associée à la table.
      */
     protected $primaryKey = 'code_demande';
 
@@ -25,18 +26,16 @@ class Demande extends Model
 
     /**
      * Indique si la clé primaire est en incrémentation automatique.
-     * Désactivé car on génère un code textuel unique (ex: DM-8F3EA21B).
      */
     public $incrementing = false;
 
     /**
-     * Indique si le modèle doit gérer les colonnes created_at et updated_at.
-     * Désactivé car tu utilises la colonne personnalisée 'date_demande'.
+     * Indique si le modèle doit gérer les colonnes standards created_at et updated_at.
      */
     public $timestamps = false;
 
     /**
-     * Les attributs qui sont assignables en masse (Mass Assignment).
+     * Les attributs qui sont assignables en masse.
      */
     protected $fillable = [
         'code_demande',
@@ -50,26 +49,26 @@ class Demande extends Model
     ];
 
     /**
-     * Les attributs qui doivent être convertis en types natifs (Cast).
+     * Les attributs qui doivent être convertis en types natifs (Casting).
      */
     protected $casts = [
-        'date_demande' => 'date',
+        'date_demande'     => 'date',
         'date_debut_prevu' => 'date',
-        'date_fin_prevu' => 'date',
+        'date_fin_prevu'   => 'date',
     ];
 
     /**
-     * Les instructions de cycle de vie du modèle (Booted Event).
+     * Instructions de cycle de vie lors de l'instanciation de l'entité.
      */
     protected static function booted()
     {
         static::creating(function ($demande) {
-            // Génération automatique du code de demande textuel
+            // Génération automatique du code de demande textuel unique
             if (empty($demande->code_demande)) {
                 $demande->code_demande = 'DM-' . strtoupper(substr(uniqid(), -8));
             }
 
-            // Remplissage automatique de 'date_demande' avec la date du jour
+            // Remplissage automatique de date_demande avec la date du jour si non fournie
             if (empty($demande->date_demande)) {
                 $demande->date_demande = now()->toDateString();
             }
@@ -77,7 +76,7 @@ class Demande extends Model
     }
 
     // =========================================================================
-    // RELATIONS ELOQUENT
+    // RELATIONS ELOQUENT COHÉRENTES
     // =========================================================================
 
     /**
@@ -95,12 +94,55 @@ class Demande extends Model
     {
         return $this->belongsTo(TypePermission::class, 'code_type_permission', 'code_type_permission');
     }
-    
+
     /**
-     * Une demande peut recevoir plusieurs lignes de validation (circuit multi-niveaux).
+     * Une demande peut recevoir plusieurs lignes de validation (circuit hiérarchique).
      */
     public function validations(): HasMany
     {
         return $this->hasMany(Validation::class, 'code_demande', 'code_demande');
+    }
+
+    // =========================================================================
+    // ACCESSEURS PRATIQUES ET BUSINESS LOGIC (POUR FACILITER L'UI)
+    // =========================================================================
+
+    /**
+     * Calcule automatiquement la durée totale en jours pour la demande.
+     * Exemple d'utilisation dans les vues : $demande->nombre_jours
+     */
+    public function getNombreJoursAttribute(): int
+    {
+        if (!$this->date_debut_prevu || !$this->date_fin_prevu) {
+            return 0;
+        }
+
+        $debut = Carbon::parse($this->date_debut_prevu);
+        $fin = Carbon::parse($this->date_fin_prevu);
+
+        return (int) $debut->diffInDays($fin) + 1;
+    }
+
+    /**
+     * Helpers booléens pour tester l'état actuel de la demande dans vos templates Blade.
+     */
+    public function isApprouvee(): bool
+    {
+        return $this->statut_demande === 'approuvee';
+    }
+
+    public function isRejetee(): bool
+    {
+        return $this->statut_demande === 'rejetee';
+    }
+
+    public function isEnAttente(): bool
+    {
+        return in_array($this->statut_demande, [
+            'en_attente_n1',
+            'en_attente_n2',
+            'en_attente_n3',
+            'en_attente_n4'
+        ]);
     }
 }

@@ -82,12 +82,19 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-muted text-uppercase">Localité de naissance</label>
-                                <input type="text" name="code_localite_naissance" class="form-control form-control-sm @error('code_localite_naissance') is-invalid @enderror" value="{{ old('code_localite_naissance') }}" placeholder="Ex: Abidjan">
+                                 <label class="form-label small fw-bold text-muted text-uppercase">Localité de naissance</label>
+                                <select name="code_localite_naissance" class="form-select form-select-sm @error('code_localite_naissance') is-invalid @enderror">
+                                    <option value="">Choisir...</option>
+                                    @foreach($localites as $l)
+                                        <option value="{{ $l->code_localite }}" {{ old('code_localite_naissance') == $l->code_localite ? 'selected' : '' }}>
+                                            {{ $l->libelle_localite }}
+                                        </option>
+                                    @endforeach
+                                </select>
                                 @error('code_localite_naissance') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
 
-
+                        
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold text-muted text-uppercase">Catégorie <span class="text-danger">*</span></label>
                                 <select name="code_categorie" class="form-select form-select-sm @error('code_categorie') is-invalid @enderror" required>

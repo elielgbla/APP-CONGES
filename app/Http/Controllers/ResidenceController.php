@@ -81,23 +81,21 @@ class ResidenceController extends Controller implements HasMiddleware // <-- AJO
      */
     public function show(string $matricule)
     {
-        // Chargement sécurisé de la relation via le pivot
+        // Chargement sécurisé de la relation via le pivot sans inclure les timestamps inexistants
         $employe = Employe::with(['localites' => function ($query) {
-            $query->orderBy('residence.created_at', 'desc');
+            $query->orderBy('residence.adresse', 'desc');
         }])->where('matricule_employe', $matricule)->firstOrFail();
 
         return view('residences.show', compact('employe'));
     }
 
-    /**
-     * EDIT : Formulaire de modification d'une ligne d'historique spécifique.
-     */
     public function edit(string $code_residence)
     {
         $residence = Residence::query()->where('code_residence', $code_residence)->firstOrFail();
         $localites = Localite::orderBy('libelle_localite', 'asc')->get();
-        $employe = Employe::where('matricule_employe', $residence->matricule_employe)->firstOrFail();
+        $employe   = Employe::where('matricule_employe', $residence->matricule_employe)->firstOrFail();
 
+        // CORRECTION : Ajout de 'employe' dans le compact()
         return view('residences.edit', compact('residence', 'localites', 'employe'));
     }
 

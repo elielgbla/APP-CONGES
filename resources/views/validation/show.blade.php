@@ -39,6 +39,10 @@
                             <span class="badge bg-warning text-dark px-3 py-2 fs-6">Attente Visa Responsable (N1)</span>
                         @elseif($demande->statut_demande === 'en_attente_n2')
                             <span class="badge bg-info text-dark px-3 py-2 fs-6">Attente Visa RH (N2)</span>
+                        @elseif($demande->statut_demande === 'en_attente_n3')
+                            <span class="badge bg-primary text-white px-3 py-2 fs-6">Attente Visa Directeur Exploitation (N3)</span>
+                        @elseif($demande->statut_demande === 'en_attente_n4')
+                            <span class="badge bg-secondary text-white px-3 py-2 fs-6">Attente Visa Directeur Général (N4)</span>
                         @elseif($demande->statut_demande === 'approuvee')
                             <span class="badge bg-success px-3 py-2 fs-6">Approuvée / Clôturée</span>
                         @elseif($demande->statut_demande === 'rejetee')
@@ -163,15 +167,18 @@
                 $niveauValidationRequis = 0;
 
                 // Calcul dynamique des droits pour l'affichage du formulaire
-                if ($demande->statut_demande === 'en_attente_n1' && $user->code_poste === 'RESPONSABLE' && $user->code_service === $demande->employe->code_service) {
+                if ($demande->statut_demande === 'en_attente_n1' && in_array($user->code_poste, ['RESP_SERVI', 'RESPONSABLE']) && $user->code_service === $demande->employe->code_service) {
                     $afficherFormulaire = true;
                     $niveauValidationRequis = 1;
                 } elseif ($demande->statut_demande === 'en_attente_n2' && $user->code_poste === 'RH') {
                     $afficherFormulaire = true;
                     $niveauValidationRequis = 2;
-                } elseif ($user->code_poste === 'ADMIN' && in_array($demande->statut_demande, ['en_attente_n1', 'en_attente_n2'])) {
+                } elseif ($demande->statut_demande === 'en_attente_n3' && in_array($user->code_poste, ['DIR_EXPLOI', 'DIR_EXPLOITATION'])) {
                     $afficherFormulaire = true;
-                    $niveauValidationRequis = ($demande->statut_demande === 'en_attente_n1') ? 1 : 2;
+                    $niveauValidationRequis = 3;
+                } elseif ($demande->statut_demande === 'en_attente_n4' && in_array($user->code_poste, ['DIR_GENERA', 'DIR_GENERAL'])) {
+                    $afficherFormulaire = true;
+                    $niveauValidationRequis = 4;
                 }
             @endphp
 

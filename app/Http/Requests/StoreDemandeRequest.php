@@ -12,8 +12,10 @@ class StoreDemandeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Seuls les employés ordinaires (ou l'admin) ont le droit de soumettre une demande
-        return Auth::check() && (Auth::user()->code_poste === 'EMPLOYE' || Auth::user()->code_poste === 'ADMIN');
+        return Auth::check() && in_array(strtoupper(Auth::user()->code_poste), [
+            'EMPLOYE', 'RESP_SERVI', 'RESPONSABLE', 'RH',
+            'DIR_EXPLOI', 'DIR_EXPLOITATION', 'DIR_GENERA', 'DIR_GENERAL'
+        ]);
     }
 
     /**
@@ -22,6 +24,7 @@ class StoreDemandeRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'matricule_employe'    => 'required|string|exists:employe,matricule_employe',
             'date_debut_prevu'     => 'required|date|after_or_equal:today',
             'date_fin_prevu'       => 'required|date|after_or_equal:date_debut_prevu',
             'motif'                => 'required|string|min:10|max:500',

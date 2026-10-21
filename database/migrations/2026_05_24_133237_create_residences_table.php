@@ -11,22 +11,31 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // On change Schema::table par Schema::create pour INITIALISER la table
         Schema::create('residence', function (Blueprint $table) {
-            // Clé primaire de la table residence
-            $table->id('code_residence'); 
-            
-            // Ajoute ici les autres colonnes de ta table si nécessaire
-            // $table->string('libelle_residence');
+            // Clé primaire auto-incrémentée par MySQL
+            $table->id('code_residence');
 
-            // On crée le matricule de l'employé en nullable
+            // Matricule de l'employé
             $table->string('matricule_employe', 20)->nullable();
 
-            // Clé étrangère reliée à la table employes
+            // Code de la localité
+            $table->string('code_localite', 50)->nullable();
+
+            // Adresse textuelle
+            $table->string('adresse', 100)->nullable();
+
+            // Clé étrangère vers la table 'employe'
             $table->foreign('matricule_employe')
                   ->references('matricule_employe')
-                  ->on('employes')
+                  ->on('employe')
                   ->onDelete('cascade')
+                  ->onUpdate('cascade');
+
+            // Clé étrangère vers la table 'localite'
+            $table->foreign('code_localite')
+                  ->references('code_localite')
+                  ->on('localite')
+                  ->onDelete('set null')
                   ->onUpdate('cascade');
         });
     }
@@ -36,7 +45,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Plus besoin de cibler la colonne, on supprime carrément la table entière
         Schema::dropIfExists('residence');
     }
 };

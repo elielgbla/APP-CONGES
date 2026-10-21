@@ -39,7 +39,7 @@
                             <tr>
                                 <th>Réf Ligne</th>
                                 <th>Coordonnée / Numéro</th>
-                                <th>Usage / Type</th>
+                                <th>Usage / Description du Type</th>
                                 <th class="text-center" style="width: 15%;">Actions</th>
                             </tr>
                         </thead>
@@ -47,33 +47,22 @@
                             @forelse($allContactsAgent as $item)
                                 <tr>
                                     <td class="text-muted fw-bold" style="font-size: 0.75rem;">
-                                        {{ $item->code_contact }}
+                                        {{ $item->code_contact ?? $item->id_contact }}
                                     </td>
                                     <td class="fw-bold text-dark">
-                                        {{ $item->numero_contact }}
+                                        {{-- Correction de numero_contact vers valeur_contact --}}
+                                        {{ $item->valeur_contact ?? $item->numero_contact }}
                                     </td>
                                     <td>
-                                        @if($item->type)
-                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1 rounded-pill" style="font-size: 0.72rem;">
-                                                @if(str_contains(strtoupper($item->code_type_contact), 'TEL'))
-                                                    <i class="fa-solid fa-phone me-1 text-primary"></i>
-                                                @elseif(str_contains(strtoupper($item->code_type_contact), 'WHATSAPP'))
-                                                    <i class="fa-brands fa-whatsapp me-1 text-success fw-bold"></i>
-                                                @else
-                                                    <i class="fa-solid fa-envelope me-1 text-warning"></i>
-                                                @endif
-                                                {{ $item->type->libelle_type_contact }}
-                                            </span>
-                                        @else
-                                            <span class="text-muted italic small">Non défini</span>
-                                        @endif
+                                        {{-- Utilisation du Nullsafe ?-> pour eviter l'erreur sur null --}}
+                                        {{ $item->typeContact?->description ?? $item->type?->description ?? $item->typeContact?->libelle_type_contact ?? $item->type?->libelle_type_contact ?? 'Non défini' }}
                                     </td>
                                     <td>
                                         <div class="d-flex justify-content-center gap-1">
-                                            <a href="{{ route('contacts.edit', $item->code_contact) }}" class="btn btn-sm btn-outline-primary py-0 px-2" title="Modifier cette attribution">
+                                            <a href="{{ route('contacts.edit', $item->code_contact ?? $item->id_contact) }}" class="btn btn-sm btn-outline-primary py-0 px-2" title="Modifier cette attribution">
                                                 <i class="fa-solid fa-pen-to-square" style="font-size: 0.75rem;"></i>
                                             </a>
-                                            <form action="{{ route('contacts.destroy', $item->code_contact) }}" method="POST" onsubmit="return confirm('Supprimer cet usage précis pour ce numéro ?');" class="d-inline">
+                                            <form action="{{ route('contacts.destroy', $item->code_contact ?? $item->id_contact) }}" method="POST" onsubmit="return confirm('Supprimer cet usage précis pour ce numéro ?');" class="d-inline">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Supprimer cet usage">
                                                     <i class="fa-solid fa-trash-can" style="font-size: 0.75rem;"></i>

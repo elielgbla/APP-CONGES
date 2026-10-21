@@ -31,7 +31,7 @@ class ContactController extends Controller
         $search = $request->input('search');
         
         // On part de l'Employe pour n'avoir qu'une ligne par agent
-        $query = Employe::whereHas('contacts')->with(['contacts.type', 'poste']);
+        $query = Employe::whereHas('contacts')->with(['contacts.typeContact', 'poste']);
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
@@ -63,7 +63,7 @@ class ContactController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'numero_contact' => 'required|string|max:20',
+            'numero_contact' => 'required|string|max:50',
             'matricule_employe' => 'required|string|exists:employe,matricule_employe',
             'types' => 'required|array|min:1', 
             'types.*' => 'string|exists:type_contact,code_type_contact'
@@ -96,19 +96,24 @@ class ContactController extends Controller
     }
 
     public function show(string $code_contact): View
-{
-    // 1. On trouve le contact de départ
-    $initialContact = Contact::findOrFail($code_contact);
-    
-    // 2. On récupère TOUTES les lignes de contacts du même employé avec leurs types respectifs
-    $allContactsAgent = Contact::with('type')
-        ->where('matricule_employe', $initialContact->matricule_employe)
-        ->get();
+    {   
+        // 1. Récupération du contact initial de référence
+        $initialContact = Contact::findOrFail($code_contact);
+        
+        // 2. Récupération du dictionnaire des types de contacts (nommé au pluriel)
+        $types = TypeContact::orderBy('libelle_type_contact', 'asc')->get();
+        
+        // 3. Récupération de TOUS les contacts de l'employé avec le type chargé (eager loading)
+        $allContactsAgent = Contact::with(['typeContact'])
+            ->where('matricule_employe', $initialContact->matricule_employe)
+            ->get();
 
-    $employe = Employe::with('poste')->where('matricule_employe', $initialContact->matricule_employe)->first();
+        // 4. Récupération des informations de l'employé (firstOrFail pour éviter les erreurs null)
+        $employe = Employe::where('matricule_employe', $initialContact->matricule_employe)->firstOrFail();
 
-    return view('contacts.show', compact('employe', 'allContactsAgent'));
-}
+        // 5. Transmission de toutes les variables nécessaires à la vue
+        return view('contacts.show', compact('employe', 'allContactsAgent', 'types', 'initialContact'));
+    }
 
     /**
      * UPDATE : Modifie l'usage spécifique de la ligne sélectionnée

@@ -28,12 +28,12 @@ class Contact extends Model
         });
     }
 
-    public function employe(): BelongsTo 
-    { 
-        return $this->belongsTo(Employe::class, 'matricule_employe', 'matricule_employe'); 
+    public function employe()
+    {
+        return $this->belongsTo(Employe::class, 'matricule_employe', 'matricule_employe');
     }
 
-    public function type(): BelongsTo
+    public function typeContact()
     {
         return $this->belongsTo(TypeContact::class, 'code_type_contact', 'code_type_contact');
     }

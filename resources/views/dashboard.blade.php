@@ -88,6 +88,8 @@
 
         </div>
 
+     
+
         {{-- NOUVEAU AJOUT : Actions Rapides Contextuelles --}}
         <div class="row g-3 mb-4">
             <div class="col-12">
@@ -117,35 +119,6 @@
             </div>
         </div>
 
-        {{-- Section Activités Récentes (Structure Professionnelle sous forme de Timeline) --}}
-        <div class="row">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm p-4 bg-white">
-                    <h5 class="fw-bold text-brown mb-3"><i class="fa-solid fa-clock-history me-2"></i> Activités Récentes</h5>
-                    
-                    {{-- Timeline stylisée pour le suivi --}}
-                    <div class="position-relative ps-3 border-left style-timeline mt-3">
-                        <div class="mb-3 position-relative">
-                            <i class="fa-solid fa-circle text-primary position-absolute start-0 translate-middle bg-white" style="margin-left: -16px; margin-top: 5px; font-size: 12px;"></i>
-                            <div class="ms-3">
-                                <span class="small text-muted d-block">Aujourd'hui à {{ now()->format('H:i') }}</span>
-                                <p class="mb-0 text-dark">Connexion sécurisée réussie sur le portail RH de SOGETHO-SA depuis votre poste informatique.</p>
-                            </div>
-                        </div>
-
-                        {{-- Section prête pour une boucle @foreach ultérieure pour tes demandes --}}
-                        <div class="mb-2 position-relative">
-                            <i class="fa-solid fa-circle text-muted position-absolute start-0 translate-middle bg-white" style="margin-left: -16px; margin-top: 5px; font-size: 12px;"></i>
-                            <div class="ms-3">
-                                <span class="small text-muted d-block">Historique global</span>
-                                <p class="text-muted mb-0 small">Le suivi complet de vos dépôts de congés et de vos validations de circuits de visas s'affichera de manière dynamique ici.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
 
     </div>
 </div>
