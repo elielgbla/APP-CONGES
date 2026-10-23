@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class EmployeTestSeeder extends Seeder
 {
@@ -11,8 +12,9 @@ class EmployeTestSeeder extends Seeder
     {
         // Désactivation des contraintes de clés étrangères pour autoriser l'insertion propre
         DB::statement('SET FOREIGN_KEY_CHECKS = 0;');
-        
+
         // Optionnel : Nettoyage préalable des tables secondaires pour éviter les doublons
+        DB::table('employe')->truncate(); // Ajouté pour vider la table employe au rafraîchissement
         DB::table('genre')->truncate();
         DB::table('categorie')->truncate();
         DB::table('poste')->truncate();
@@ -78,7 +80,35 @@ class EmployeTestSeeder extends Seeder
             ['code_type_contact' => 'LINKEDIN',        'libelle_type_contact' => 'Profil LinkedIn',                  'description' => 'Lien vers le profil professionnel LinkedIn'],
         ]);
 
+               // 8. Insertion de l'employé demandé (GBLA TONGA ELIEL)
+        DB::table('employe')->insert([
+            'matricule_employe'       => 'GBLA',
+            'nom'                     => 'GBLA',
+            'prenom'                  => 'TONGA ELIEL',
+            'date_naissance'          => '2006-01-10',
+            'code_localite_naissance' => 'ABD_KSS',
+            'mot_de_passe'            => Hash::make('P@lmConge26'),
+            'statut_compte'           => 'actif',
+            'email'                   => 'elielgbla@gmail.com',
+            'photo'                   => null,
+            'total_conge_restant'     => 0,
+            'code_genre'              => 'M',
+            'code_categorie'          => 'CIV'
+        ]);
+
+        // 9. Insertion de l'historique de poste (Attribution du poste ADMIN)
+        DB::table('historique_poste')->insert([
+            'code_historique'   => 'HIST_GBLA_01',             // Clé primaire personnalisée (varchar(15))
+            'matricule_employe' => 'GBLA',                     // Clé étrangère vers l'employé
+            'code_poste'        => 'ADMIN',                    // Poste Administrateur défini au point 3
+            'code_service'      => 'IT_DEV',                   // Service Informatique défini au point 5
+            'date_debut'        => now()->format('Y-m-d'),     // Date du jour comme début d'affectation
+            'date_fin'          => null                        // NULL car le poste est actuellement actif
+        ]);
+
         // Réactivation des contraintes de clés étrangères après l'exécution
         DB::statement('SET FOREIGN_KEY_CHECKS = 1;');
+
     }
 }
+
