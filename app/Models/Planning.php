@@ -2,17 +2,22 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Validation\ValidationException;
 
 class Planning extends Model
 {
     protected $table = 'planning_journalier_employe';
+
     protected $primaryKey = 'code_planning';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -23,7 +28,7 @@ class Planning extends Model
         'heure_debut',
         'heure_fin',
         'jour_repos_1',
-        'jour_repos_2'
+        'jour_repos_2',
     ];
 
     /**
@@ -46,9 +51,54 @@ class Planning extends Model
                     $position = 1; // Si la table est complètement vide
                 }
 
-                $planning->code_planning = 'PLN' . str_pad($position, 4, '0', STR_PAD_LEFT);
+                $planning->code_planning = 'PLN'.str_pad($position, 4, '0', STR_PAD_LEFT);
             }
         });
+    }
+
+    public static function closeOpenPlanningBefore(
+        string $matriculeEmploye,
+        string|Carbon $dateDebut,
+        string $dateField = 'date_debut'
+    ): void {
+        $nouvelleDateDebut = Carbon::parse($dateDebut)->startOfDay();
+        $planningsActifs = static::query()
+            ->where('matricule_employe', $matriculeEmploye)
+            ->whereNull('date_fin')
+            ->orderByDesc('date_debut')
+            ->lockForUpdate()
+            ->get();
+
+        if ($planningsActifs->isEmpty()) {
+            return;
+        }
+
+        try {
+            $dateFinPrecedent = static::getPreviousEndDate(
+                $nouvelleDateDebut,
+                $planningsActifs->first()->date_debut
+            );
+        } catch (\InvalidArgumentException) {
+            throw ValidationException::withMessages([
+                $dateField => 'Le nouveau planning doit commencer après le début du planning actif.',
+            ]);
+        }
+
+        $planningsActifs->each->update([
+            'date_fin' => $dateFinPrecedent,
+        ]);
+    }
+
+    public static function getPreviousEndDate(string|Carbon $newStart, string|Carbon $currentStart): string
+    {
+        $newStart = Carbon::parse($newStart)->startOfDay();
+        $currentStart = Carbon::parse($currentStart)->startOfDay();
+
+        if ($newStart->lessThanOrEqualTo($currentStart)) {
+            throw new \InvalidArgumentException('The new planning must start after the current planning.');
+        }
+
+        return $newStart->copy()->subDay()->toDateString();
     }
 
     /**
@@ -71,10 +121,10 @@ class Planning extends Model
     private function getBorneFinCalcul(): Carbon
     {
         $debut = Carbon::parse($this->date_debut);
-        
+
         // Si la date_fin est NULL (ouvert), on prend aujourd'hui
         $fin = $this->date_fin ? Carbon::parse($this->date_fin) : Carbon::today();
-        
+
         // Si aujourd'hui est entre le début et la fin, on s'arrête dynamiquement à aujourd'hui
         if (Carbon::today()->between($debut, $fin)) {
             return Carbon::today();
@@ -101,7 +151,7 @@ class Planning extends Model
 
         $joursTravail = 0;
         foreach ($period as $date) {
-            if (!in_array($date->format('N'), $repos)) {
+            if (! in_array($date->format('N'), $repos)) {
                 $joursTravail++;
             }
         }

@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Carbon\Carbon;
@@ -89,24 +90,14 @@ public static function middleware(): array
         'jour_repos_2.different' => 'Le deuxième jour de repos doit impérativement être différent du premier.',
     ]);
 
-    // 1. LOGIQUE DE CLÔTURE DE L'ANCIEN PLANNING (Remplace le Trigger)
-    $planningPrecedent = Planning::where('matricule_employe', $request->matricule_employe)
-        ->whereNull('date_fin')
-        ->first();
+    DB::transaction(function () use ($validated) {
+        Planning::closeOpenPlanningBefore(
+            $validated['matricule_employe'],
+            $validated['date_debut']
+        );
 
-    if ($planningPrecedent) {
-        // Calcule la veille de la nouvelle date de début (ex: 19/12/2026 -> 18/12/2026)
-        $nouvelleDateDebut = \Carbon\Carbon::parse($request->date_debut);
-        $dateFinPrecedent = $nouvelleDateDebut->subDay()->format('Y-m-d');
-
-        // Met à jour l'ancien planning avec sa date de fin
-        $planningPrecedent->update([
-            'date_fin' => $dateFinPrecedent
-        ]);
-    }
-
-    // 2. Insertion sécurisée en utilisant les données validées
-    Planning::create($validated);
+        Planning::create($validated);
+    });
 
     return redirect()->route('plannings.show', $request->matricule_employe)
         ->with('success', 'Nouveau créneau horaire ajouté avec succès et planning précédent clôturé.');

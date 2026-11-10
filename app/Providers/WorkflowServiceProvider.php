@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\DB;
 use App\Models\Demande;
 use App\Models\Employe;
+use App\Models\Planning;
 use App\Models\Validation;
 
 class WorkflowServiceProvider extends ServiceProvider
@@ -133,6 +134,12 @@ class WorkflowServiceProvider extends ServiceProvider
                                     }
 
                                     // Création automatique du planning d'absence
+                                    Planning::closeOpenPlanningBefore(
+                                        $demande->matricule_employe,
+                                        $demande->date_debut_prevu,
+                                        'date_debut_prevu'
+                                    );
+
                                     DB::table('planning_journalier_employe')->insert([
                                         'code_planning' => 'PLN-' . strtoupper(substr(uniqid(), -8)),
                                         'matricule_employe' => $demande->matricule_employe,

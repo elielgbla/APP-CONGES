@@ -30,19 +30,6 @@ return new class extends Migration
             $table->foreign('code_type_permission')->references('code_type_permission')->on('type_permission');
         });
 
-        // Trigger : décrémenter total_conge_restant à l\'approbation
-        DB::unprepared('
-            CREATE TRIGGER maj_conge_apres_approbation
-            AFTER UPDATE ON demande
-            FOR EACH ROW
-            BEGIN
-                IF NEW.statut_demande = \'approuvee\' AND OLD.statut_demande != \'approuvee\' THEN
-                    UPDATE employe
-                    SET total_conge_restant = total_conge_restant - DATEDIFF(NEW.date_fin_prevu, NEW.date_debut_prevu)
-                    WHERE matricule_employe = NEW.matricule_employe;
-                END IF;
-            END
-        ');
     }
 
     public function down(): void
