@@ -94,6 +94,8 @@ Route::middleware('reseau.local')->group(function () {
         
         // Impression individuelle d'une fiche
         Route::get('/demandes/{code_demande}/imprimer', [DemandeController::class, 'imprimerUnique'])->name('demandes.imprimerUnique');
+        Route::get('/demandes/{code_demande}/attestation', [DemandeController::class, 'attestation'])
+            ->name('demandes.attestation');
 
         // CRUD complet Demandes
         Route::resource('demandes', DemandeController::class)->parameters([

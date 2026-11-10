@@ -37,6 +37,11 @@
             </h1>
         </div>
         <div class="d-flex gap-2">
+            @if($demande->statut_demande === 'approuvee')
+                <a href="{{ route('demandes.attestation', $demande->code_demande) }}" class="btn btn-sm btn-success px-3" target="_blank" rel="noopener">
+                    <i class="fa-solid fa-file-circle-check me-1"></i> Attestation
+                </a>
+            @endif
             <button type="button" onclick="ouvrirFenetreImpression('{{ route('demandes.imprimerUnique', $demande->code_demande) }}')" class="btn btn-sm text-white px-3" style="background-color: #4a3b32; font-weight: 500; border-radius: 6px;">
                 <i class="fa-solid fa-print me-1"></i> Imprimer le Titre
             </button>

@@ -18,8 +18,8 @@ class CheckAppLifecycle
         $installDateString = env('APP_INSTALLATION_DATE', Carbon::now()->toDateString());
         $installDate = Carbon::parse($installDateString);
         
-        // Calcul du cycle de vie (10 ans maximum)
-        $expirationDate = $installDate->copy()->addYears(10);
+        // Calcul du cycle de vie (5 ans maximum)
+        $expirationDate = $installDate->copy()->addYears(5);
 
         // Si la date actuelle dépasse la date d'expiration
         if (Carbon::now()->greaterThan($expirationDate)) {

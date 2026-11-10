@@ -319,7 +319,7 @@ class DemandeController extends Controller
             'employe.historiquePostes.poste', 
             'employe.historiquePostes.service', 
             'typePermission', 
-            'validations'
+            'validations.valideur'
         ])->findOrFail($code_demande);
 
         if ($demande->statut_demande !== 'approuvee') {

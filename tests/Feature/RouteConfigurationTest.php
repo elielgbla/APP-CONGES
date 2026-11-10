@@ -53,4 +53,13 @@ class RouteConfigurationTest extends TestCase
         $this->assertTrue(view()->exists('auth.passwords.edit'));
         $this->assertTrue(view()->exists('localites.show'));
     }
+
+    public function test_attestation_route_and_print_view_are_available(): void
+    {
+        $this->assertSame(
+            '/demandes/DM-12345678/attestation',
+            route('demandes.attestation', ['code_demande' => 'DM-12345678'], false)
+        );
+        $this->assertTrue(view()->exists('demandes.attestation'));
+    }
 }
