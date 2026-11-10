@@ -86,39 +86,9 @@ class DemandeController extends Controller
         $user = Employe::where('matricule_employe', Auth::user()->matricule_employe)->firstOrFail();
         $types_conge = TypePermission::all();
         
-        $user->load(['historiquePostes' => function ($q) {
-            $q->whereNull('date_fin');
-        }]);
-        $historiqueUser = $user->historiquePostes->first();
-        $codeService = $historiqueUser ? $historiqueUser->code_service : null;
-
-        $employes = collect();
-        
-        // Distribution stricte du ciblage des employés à la création de demande
-        switch ($user->code_poste) {
-            case 'EMPLOYE':
-            case 'DIR_EXPLOI':
-            case 'DIR_EXPLOITATION':
-            case 'DIR_GENERA':
-            case 'DIR_GENERAL':
-                // Ces profils ne créent que pour eux-mêmes
-                $employes = Employe::where('matricule_employe', $user->matricule_employe)->get();
-                break;
-
-            case 'RESP_SERVI':
-            case 'RESPONSABLE':
-                // Menu déroulant restreint aux membres du service actif uniquement
-                $employes = Employe::whereHas('historiquePostes', function ($query) use ($codeService) {
-                    $query->where('historique_poste.code_service', $codeService)->whereNull('date_fin');
-                })->get();
-                break;
-
-            case 'RH':
-            case 'ADMIN':
-                // Choix complet de tous les employés actifs
-                $employes = Employe::where('statut_compte', 'actif')->get();
-                break;
-        }
+        $employes = $user->peutCreerDemandePourTous()
+            ? Employe::where('statut_compte', 'actif')->orderBy('nom')->get()
+            : collect([$user]);
 
         return view('demandes.create', compact('types_conge', 'employes'));
     }
@@ -133,28 +103,8 @@ class DemandeController extends Controller
         $matriculeSoumis = $request->matricule_employe;
         $demandeur = Employe::where('matricule_employe', $matriculeSoumis)->firstOrFail();
 
-        // Restriction stricte de création pour simple employé et directions opérationnelles
-        $profilsRestreints = ['EMPLOYE', 'DIR_EXPLOI', 'DIR_EXPLOITATION', 'DIR_GENERA', 'DIR_GENERAL'];
-        if (in_array($user->code_poste, $profilsRestreints) && $matriculeSoumis !== $user->matricule_employe) {
+        if (!$request->canSubmitFor($matriculeSoumis)) {
             return redirect()->back()->withErrors(['matricule_employe' => 'Habilitation insuffisante : vous ne pouvez soumettre une demande que pour vous-même.']);
-        }
-
-        // Restriction stricte pour les responsables de service
-        if ($user->code_poste === 'RESP_SERVI' || $user->code_poste === 'RESPONSABLE') {
-            $user->load(['historiquePostes' => function ($q) {
-                $q->whereNull('date_fin');
-            }]);
-            $historiqueUser = $user->historiquePostes->first();
-            $codeServiceUser = $historiqueUser ? $historiqueUser->code_service : null;
-
-            $isSameService = Employe::where('matricule_employe', $matriculeSoumis)
-                ->whereHas('historiquePostes', function ($query) use ($codeServiceUser) {
-                    $query->where('historique_poste.code_service', $codeServiceUser)->whereNull('date_fin');
-                })->exists();
-
-            if (!$isSameService) {
-                return redirect()->back()->withErrors(['matricule_employe' => 'Vous pouvez uniquement soumettre pour les agents de votre propre service.']);
-            }
         }
 
         $demande = Demande::create(array_merge($request->validated(), [

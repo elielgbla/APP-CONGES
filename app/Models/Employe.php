@@ -136,6 +136,30 @@ class Employe extends Authenticatable
             ->latest('date_debut');
     }
 
+    public function codePosteActif(): string
+    {
+        return (string) ($this->affectationActuelle()->value('code_poste') ?? 'EMPLOYE');
+    }
+
+    public function peutCreerDemandePourTous(): bool
+    {
+        $affectation = $this->affectationActuelle()
+            ->first(['code_poste', 'code_service']);
+
+        if (!$affectation) {
+            return false;
+        }
+
+        $codePoste = strtoupper((string) $affectation->code_poste);
+        $codeService = strtoupper((string) $affectation->code_service);
+
+        return $codePoste === 'ADMIN'
+            || (
+                in_array($codePoste, ['RH', 'RESP_SERVI', 'RESPONSABLE'], true)
+                && $codeService === 'RH_SERV'
+            );
+    }
+
     /**
      * Relation vers le Poste actuel (Harmonisé et compatible Liste + Unique)
      */

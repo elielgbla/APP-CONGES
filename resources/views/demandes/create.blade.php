@@ -44,7 +44,7 @@
                                                 data-nom="{{ $emp->nom }}" 
                                                 data-prenom="{{ $emp->prenom }}" 
                                                 data-solde="{{ $emp->total_conge_restant }}"
-                                                {{ old('matricule_employe') == $emp->matricule_employe ? 'selected' : '' }}>
+                                                {{ old('matricule_employe', $employes->count() === 1 ? $emp->matricule_employe : '') == $emp->matricule_employe ? 'selected' : '' }}>
                                             {{ $emp->matricule_employe }} - {{ $emp->nom }} {{ $emp->prenom }}
                                         </option>
                                     @endforeach
