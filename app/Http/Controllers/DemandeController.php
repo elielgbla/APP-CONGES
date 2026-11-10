@@ -233,28 +233,36 @@ class DemandeController extends Controller
             'commentaire' => 'nullable|string|max:255'
         ]);
 
-        $demande = Demande::findOrFail($code_demande);
-        
         $data = [
             'decision'    => $request->action,
             'commentaire' => $request->commentaire
         ];
 
-        // Délégation du visa de validation au service métier sécurisé
-        $this->workflowService->validerEtape($demande, $user, $data);
+        DB::transaction(function () use ($code_demande, $user, $data, $request) {
+            $demande = Demande::where('code_demande', $code_demande)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // Évolution de l'étape de validation via notre fournisseur de services
-        app('workflow')->passerEtape($demande->code_demande, $user->matricule_employe, $request->action === 'valide' ? 'passer' : 'rejeter', $request->commentaire);
+            $this->workflowService->validerEtape($demande, $user, $data);
 
-        DB::table('journalisation')->insert([
-            'code_log'          => 'LOG' . sprintf('%07d', random_int(1, 9999999)),
-            'matricule_employe' => $user->matricule_employe,
-            'action'            => 'Visa Validation',
-            'table_concernee'   => 'demande, validation_permission',
-            'date_action'       => now(),
-            'details'           => "Visa [{$request->action}] émis sur la demande {$demande->code_demande}.",
-            'ip_address'        => $request->ip(),
-        ]);
+            $etapeAvancee = app('workflow')->passerEtape(
+                $demande->code_demande,
+                $user->matricule_employe,
+                $request->action === 'valide' ? 'passer' : 'rejeter',
+                $request->commentaire
+            );
+            abort_unless($etapeAvancee, 403, 'Le workflow n’a pas pu faire évoluer le statut de la demande.');
+
+            DB::table('journalisation')->insert([
+                'code_log'          => 'LOG' . sprintf('%07d', random_int(1, 9999999)),
+                'matricule_employe' => $user->matricule_employe,
+                'action'            => 'Visa Validation',
+                'table_concernee'   => 'demande, validation_permission',
+                'date_action'       => now(),
+                'details'           => "Visa [{$request->action}] émis sur la demande {$demande->code_demande}.",
+                'ip_address'        => $request->ip(),
+            ]);
+        });
 
         return redirect()->route('demandes.show', $code_demande)->with('success', 'Votre visa de validation a bien été enregistré.');
     }

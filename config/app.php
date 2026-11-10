@@ -1,5 +1,20 @@
 <?php
 
+$defaultLocalNetworks = [
+    '127.0.0.0/8',
+    '::1/128',
+    '10.0.0.0/8',
+    '172.16.0.0/12',
+    '192.168.0.0/16',
+    '169.254.0.0/16',
+    'fc00::/7',
+    'fe80::/10',
+];
+$additionalLocalNetworks = array_filter(array_map(
+    'trim',
+    explode(',', (string) env('APP_LOCAL_NETWORKS', ''))
+));
+
 return [
 
     /*
@@ -53,6 +68,15 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
+
+    'installation_date' => env('APP_INSTALLATION_DATE'),
+
+    'lifecycle_years' => (int) env('APP_LIFECYCLE_YEARS', 5),
+
+    'local_networks' => array_values(array_unique(array_merge(
+        $defaultLocalNetworks,
+        $additionalLocalNetworks
+    ))),
 
     /*
     |--------------------------------------------------------------------------

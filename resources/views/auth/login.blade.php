@@ -78,6 +78,12 @@
                         </div>
                     @endif
 
+                    @if (session('success'))
+                        <div class="alert alert-success border-0 shadow-sm">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
                     <form action="{{ route('login.post') }}" method="POST">
                         @csrf
 
@@ -111,12 +117,14 @@
                         <button type="submit" class="btn btn-brand w-100 py-2 fw-bold shadow-sm">
                             <i class="fas fa-right-to-bracket me-2"></i>Se connecter
                         </button>
-                        
+                        <!--
                         <div class="text-center mt-3">
                              <a href="{{ route('password.request') }}" class="text-decoration-none fw-semibold" style="color:#2c5e3b;">
                                  Mot de passe oublié ?
                              </a>
                         </div>
+
+                    -->
                     </form>
 
                     <div class="text-center mt-4">

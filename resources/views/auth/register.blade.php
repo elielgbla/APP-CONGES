@@ -136,32 +136,6 @@
 
                         <div class="row">
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-semibold mini-text">Service Affecté <span class="text-danger">*</span></label>
-                                <select name="code_service" class="form-select soft-select @error('code_service') is-invalid @enderror" required>
-                                    <option value="">Sélectionnez...</option>
-                                    @foreach($services as $service)
-                                        <option value="{{ $service->code_service }}" {{ old('code_service') == $service->code_service ? 'selected' : '' }}>
-                                            {{ $service->libelle_service }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('code_service') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-semibold mini-text">Poste / Rôle <span class="text-danger">*</span></label>
-                                <select name="code_poste" class="form-select soft-select @error('code_poste') is-invalid @enderror" required>
-                                    <option value="">Sélectionnez...</option>
-                                    @foreach($postes as $poste)
-                                        <option value="{{ $poste->code_poste }}" {{ old('code_poste') == $poste->code_poste ? 'selected' : '' }}>
-                                            {{ $poste->libelle_poste }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('code_poste') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="col-md-4 mb-3">
                                 <label class="form-label fw-semibold mini-text">Catégorie <span class="text-danger">*</span></label>
                                 <select name="code_categorie" class="form-select soft-select @error('code_categorie') is-invalid @enderror" required>
                                     <option value="">Sélectionnez...</option>

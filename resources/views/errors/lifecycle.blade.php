@@ -13,6 +13,9 @@
                 <p class="text-muted small px-3">
                     Cette application a atteint sa limite maximale d'utilisation continue sans vérification technique.
                 </p>
+                <p class="text-muted small px-3">
+                    Durée configurée : {{ config('app.lifecycle_years') }} ans à compter du {{ config('app.installation_date') }}.
+                </p>
 
                 <div class="alert alert-danger border-0 small py-3 my-4 text-start">
                     <i class="fa-solid fa-triangle-exclamation me-2"></i>
@@ -24,7 +27,7 @@
                 </p>
 
                 <div class="mt-4 border-top pt-3">
-                    <span class="text-muted small">Code d'erreur : <code class="text-danger">LIFECYCLE_EXPIRED_5Y</code></span>
+                    <span class="text-muted small">Code d'erreur : <code class="text-danger">LIFECYCLE_EXPIRED_{{ config('app.lifecycle_years') }}Y</code></span>
                 </div>
             </div>
         </div>

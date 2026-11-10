@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckLocalNetwork
@@ -12,13 +13,8 @@ class CheckLocalNetwork
     {
         $ip = $request->ip();
 
-        // Autoriser localhost et les plages IP privées locales (Ex: Abidjan LAN)
-        $allowedPrefixes = ['127.0.0.1', '::1', '192.168.', '10.', '172.16.'];
-
-        foreach ($allowedPrefixes as $prefix) {
-            if (str_starts_with($ip, $prefix)) {
-                return $next($request);
-            }
+        if (is_string($ip) && IpUtils::checkIp($ip, config('app.local_networks', []))) {
+            return $next($request);
         }
 
         // Si l'accès vient de l'extérieur, on bloque

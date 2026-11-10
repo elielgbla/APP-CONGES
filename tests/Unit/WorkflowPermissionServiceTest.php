@@ -16,6 +16,7 @@ class WorkflowPermissionServiceTest extends TestCase
         $this->assertSame(2, $service->getNiveauValidationParPoste('RH'));
         $this->assertSame(3, $service->getNiveauValidationParPoste('DIR_EXPLOI'));
         $this->assertSame(3, $service->getNiveauValidationParPoste('DIR_EXPLOITATION'));
+        $this->assertSame(4, $service->getNiveauValidationParPoste('DG'));
         $this->assertSame(4, $service->getNiveauValidationParPoste('DIR_GENERA'));
         $this->assertSame(4, $service->getNiveauValidationParPoste('DIR_GENERAL'));
         $this->assertNull($service->getNiveauValidationParPoste('ADMIN'));

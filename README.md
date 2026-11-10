@@ -87,8 +87,11 @@ Services métiers :
 - Les routes publiques sont protégées par le middleware `reseau.local` et accessibles seulement en réseau interne.
 - Les pages de connexion, d'inscription et de mot de passe oublié sont accessibles aux invités (`guest`).
 - Après authentification, les utilisateurs accèdent aux routes protégées par `auth`.
-- Les comptes marqués `inactif` ou `suspendu` sont redirigés vers `/compte-inactif`.
+- Toute inscription publique crée un compte `inactif`, sans affectation de poste/service ni connexion automatique. Seul un administrateur peut l'activer après vérification et affectation via la mutation.
+- Les comptes `inactif` ou `suspendu` ne peuvent pas ouvrir de session.
 - La licence/mode maintenance est contrôlée par `CheckAppLifecycle` et redirige vers `/maintenance-licence` si nécessaire.
+- La durée est réglée par `APP_LIFECYCLE_YEARS` (5 ans par défaut) à partir de la date de mise en production `APP_INSTALLATION_DATE`; la date doit être conservée lors des mises à jour.
+- Les réseaux locaux IPv4 privés et IPv6 locaux sont autorisés par défaut. Les plages internes supplémentaires peuvent être ajoutées en CIDR dans `APP_LOCAL_NETWORKS`, séparées par des virgules; les adresses hors liste sont refusées.
 
 ### Rôles et niveaux de validation
 
@@ -106,7 +109,7 @@ Le système repose sur un code de poste actif enregistré via `historique_poste`
 1. `EMPLOYE` crée une demande via `DemandeController::store()`.
 2. La demande naît avec le statut `en_attente_n1`.
 3. Premier visa : `RESP_SERVI` autorisé si l'employé appartient au même service actif.
-4. Deuxième visa : `RH` valide le dossier et le passe en `en_attente_n3`.
+4. Deuxième visa : le poste `RH` affecté au service `RH_SERV` valide le dossier et le passe en `en_attente_n3`.
 5. Troisième visa : `DIR_EXPLOI`/`DIR_EXPLOITATION` passe en `en_attente_n4`.
 6. Quatrième visa : `DIR_GENERA`/`DIR_GENERAL` approuve définitivement la demande.
 7. Si la demande est rejetée à tout niveau, son statut devient `rejetee` et le circuit s'arrête.
@@ -123,6 +126,7 @@ Le système repose sur un code de poste actif enregistré via `historique_poste`
 ### Validation et enregistrement métier
 
 - `ValidationController::store()` enregistre chaque décision dans la table `validation_permission`.
+- Le statut évolue uniquement dans le workflow applicatif après verrouillage de la demande; aucun trigger SQL ne le modifie.
 - Si l'action est `valide`, le statut évolue vers le niveau suivant.
 - Si l'action est `rejete`, la demande passe immédiatement à `rejetee`.
 - L'approbation finale (`N4`) déclenche aussi la création d'un `Planning` pour bloquer la période d'absence de l'employé.
@@ -201,6 +205,7 @@ Le projet contient plusieurs entités de configuration métier :
 - Un employé ne peut créer une demande que pour lui-même, sauf s'il a un rôle RH ou responsable de service.
 - Les responsables de service ne peuvent valider que les demandes de leur service.
 - Les niveaux de validation sont stricts et ne peuvent pas être sautés.
+- Seul un administrateur peut activer un compte; les RH ne peuvent pas faire passer un compte inactif à actif.
 - L'`ADMIN` a une visibilité élargie mais ne doit pas valider les demandes dans le moteur `WorkflowPermissionService`.
 - Les comptes `inactif`/`suspendu` ne peuvent pas naviguer dans l'application normale.
 
@@ -236,6 +241,5 @@ Le projet contient plusieurs entités de configuration métier :
 - une journalisation d'audit,
 - une sécurité réseau locale,
 - des entités métiers clairement séparées dans `app/Models` et `app/Http/Controllers`.
-
 
 

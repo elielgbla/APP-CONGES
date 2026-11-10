@@ -20,8 +20,6 @@ class RegisterRequest extends FormRequest
             'email'                   => 'required|email|unique:employe,email|max:150',
             'date_naissance'          => 'nullable|date|before:today',
             'code_genre'              => 'required|exists:genre,code_genre',
-            'code_service'            => 'required|exists:service,code_service',
-            'code_poste'              => 'required|exists:poste,code_poste',
             'code_categorie'          => 'required|exists:categorie,code_categorie',
             'code_residence'          => 'nullable|exists:residence,code_residence',
             'code_localite_naissance' => 'nullable|exists:localite,code_localite',

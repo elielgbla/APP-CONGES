@@ -20,7 +20,7 @@ class WorkflowPermissionService
             'RESP_SERVI', 'RESPONSABLE'      => 1, // Chef de Service
             'RH'                             => 2, // Ressources Humaines
             'DIR_EXPLOI', 'DIR_EXPLOITATION' => 3, // Directeur d'Exploitation
-            'DIR_GENERA', 'DIR_GENERAL'      => 4, // Directeur Général
+            'DG', 'DIR_GENERA', 'DIR_GENERAL' => 4, // Directeur Général
             default                          => null,
         };
     }
@@ -196,6 +196,10 @@ class WorkflowPermissionService
 
         if ($niveauValidation === 1 && strtoupper((string) $valideur->code_service) !== strtoupper((string) $demande->employe->code_service)) {
             abort(403, "Vous ne pouvez valider que les demandes de votre propre service.");
+        }
+
+        if ($niveauValidation === 2 && strtoupper((string) $valideur->code_service) !== 'RH_SERV') {
+            abort(403, "Seul le responsable affecté au service RH peut valider à ce niveau.");
         }
 
         // 3. Contrôle strict de tour de rôle

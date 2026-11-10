@@ -5,12 +5,10 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Employe;
 use App\Models\Journalisation;
-use App\Models\HistoriquePoste;
 use App\Http\Requests\RegisterRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class LoginController extends Controller
 {
@@ -29,11 +27,9 @@ class LoginController extends Controller
     {
         $genres = \App\Models\Genre::all();
         $categories = \App\Models\Categorie::all();
-        $services = \App\Models\Service::all();
-        $postes = \App\Models\Poste::all();
         $localites = \App\Models\Localite::all();
 
-        return view('auth.register', compact('genres', 'categories', 'services', 'postes', 'localites'));
+        return view('auth.register', compact('genres', 'categories', 'localites'));
     }
 
     /**
@@ -53,6 +49,13 @@ class LoginController extends Controller
             ->first();
 
         if ($employe && Hash::check($credentials['mot_de_passe'], $employe->mot_de_passe)) {
+            if (strtolower((string) $employe->statut_compte) !== 'actif') {
+                return back()->withErrors([
+                    'matricule_employe' => strtolower((string) $employe->statut_compte) === 'suspendu'
+                        ? 'Ce compte est suspendu. Veuillez contacter un administrateur.'
+                        : 'Votre inscription est en attente d’activation par un administrateur.',
+                ])->onlyInput('matricule_employe');
+            }
 
             // Connexion officielle dans la session de Laravel
             auth()->login($employe);
@@ -78,14 +81,11 @@ class LoginController extends Controller
     }
 
     /**
-     * Gérer l'inscription d'un nouvel employé et initialiser ses droits d'accès via l'historique
+     * Gérer l'inscription d'un nouvel employé en attente d'activation administrative.
      */
     public function register(RegisterRequest $request)
     {
-        // Utilisation d'une transaction DB pour s'assurer que l'employe ET son historique se créent ensemble
-        DB::beginTransaction();
-
-        try {
+        DB::transaction(function () use ($request) {
             // 1. Création de la fiche employé (uniquement avec les colonnes réelles de votre table employe)
             $employe = Employe::create([
                 'matricule_employe'       => $request->matricule_employe,
@@ -97,44 +97,21 @@ class LoginController extends Controller
                 'code_categorie'          => $request->code_categorie,
                 'code_localite_naissance' => $request->code_localite_naissance,
                 'mot_de_passe'            => Hash::make($request->mot_de_passe),
-                'statut_compte'           => 'actif',
+                'statut_compte'           => 'inactif',
                 'total_conge_restant'     => 30, // Allocation de base réglementaire
-            ]);
-
-            // 2. Génération du code d'historique (Exemple: HIST-XXXXX)
-            $codeHistorique = 'HIST-' . strtoupper(substr(uniqid(), -8));
-
-            // 3. Liaison immédiate du poste et du service dans historique_poste pour attribuer ses droits d'accès
-            HistoriquePoste::create([
-                'code_historique'   => $codeHistorique,
-                'matricule_employe' => $employe->matricule_employe,
-                'code_poste'        => $request->code_poste,   // Détermine s'il est admin, responsable, etc.
-                'code_service'      => $request->code_service,
-                'date_debut'        => Carbon::now()->toDateString(),
-                'date_fin'          => null, // Reste actif tant que pas de date de fin
             ]);
 
             // Tracing d'audit de l'inscription
             Journalisation::create([
                 'matricule_employe' => $employe->matricule_employe,
                 'action'            => 'Inscription',
-                'table_concernee'   => 'employe, historique_poste',
-                'details'           => "Création de compte et affectation initiale au poste: {$request->code_poste}.",
+                'table_concernee'   => 'employe',
+                'details'           => 'Création du compte en attente d’activation administrative.',
                 'ip_address'        => $request->ip()
             ]);
+        });
 
-            DB::commit();
-
-            // Connexion automatique immédiate après inscription via le guard Laravel
-            auth()->login($employe);
-            $request->session()->regenerate();
-
-            return redirect()->route('dashboard')->with('success', 'Votre compte a été configuré avec succès.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->withErrors(['error' => "Une erreur est survenue lors de l'inscription : " . $e->getMessage()]);
-        }
+        return redirect()->route('login')->with('success', 'Votre inscription est enregistrée. Un administrateur doit activer votre compte avant votre première connexion.');
     }
 
     /**

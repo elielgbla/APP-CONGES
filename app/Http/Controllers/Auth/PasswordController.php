@@ -8,6 +8,7 @@ use App\Models\Journalisation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Validation\Rules\Password;
 
 class PasswordController extends Controller
@@ -78,20 +79,26 @@ class PasswordController extends Controller
             return back()->with('error', 'Collaborateur introuvable.');
         }
 
-        $motDePasseParDefaut = '@m0tDep@sse';
+        if (!$employe->email) {
+            return back()->with('error', 'Impossible d’envoyer un lien : aucune adresse e-mail n’est renseignée pour ce collaborateur.');
+        }
 
-        $employe->update([
-            'mot_de_passe' => Hash::make($motDePasseParDefaut),
+        $status = PasswordBroker::broker('users')->sendResetLink([
+            'email' => $employe->email,
         ]);
+
+        if ($status !== PasswordBroker::RESET_LINK_SENT) {
+            return back()->with('error', 'Le lien de réinitialisation n’a pas pu être envoyé. Vérifiez la configuration de messagerie.');
+        }
 
         Journalisation::create([
             'matricule_employe' => Auth::user()->matricule_employe,
             'action' => 'Réinitialisation Admin',
             'table_concernee' => 'employe',
-            'details' => "Réinitialisation du mot de passe de l'employé au matricule : {$matricule}.",
+            'details' => "Envoi d'un lien de réinitialisation à l'employé au matricule : {$matricule}.",
             'ip_address' => $request->ip(),
         ]);
 
-        return back()->with('success', "Le mot de passe de l'employé a été réinitialisé avec succès sur : {$motDePasseParDefaut}");
+        return back()->with('success', 'Un lien de réinitialisation a été envoyé à l’adresse e-mail du collaborateur.');
     }
 }

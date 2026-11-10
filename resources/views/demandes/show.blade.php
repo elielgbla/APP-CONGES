@@ -13,13 +13,13 @@
     if ($demande->matricule_employe !== Auth::user()->matricule_employe && $demande->statut_demande === 'en_attente_n1' && in_array($posteValideur, ['RESP_SERVI', 'RESPONSABLE'])) {
         $peutValider = true;
         $niveauEnCours = 1;
-    } elseif ($demande->matricule_employe !== Auth::user()->matricule_employe && $demande->statut_demande === 'en_attente_n2' && $posteValideur === 'RH') {
+    } elseif ($demande->matricule_employe !== Auth::user()->matricule_employe && $demande->statut_demande === 'en_attente_n2' && $posteValideur === 'RH' && strtoupper((string) Auth::user()->code_service) === 'RH_SERV') {
         $peutValider = true;
         $niveauEnCours = 2;
     } elseif ($demande->matricule_employe !== Auth::user()->matricule_employe && $demande->statut_demande === 'en_attente_n3' && in_array($posteValideur, ['DIR_EXPLOI', 'DIR_EXPLOITATION'])) {
         $peutValider = true;
         $niveauEnCours = 3;
-    } elseif ($demande->matricule_employe !== Auth::user()->matricule_employe && $demande->statut_demande === 'en_attente_n4' && in_array($posteValideur, ['DIR_GENERA', 'DIR_GENERAL'])) {
+    } elseif ($demande->matricule_employe !== Auth::user()->matricule_employe && $demande->statut_demande === 'en_attente_n4' && in_array($posteValideur, ['DG', 'DIR_GENERA', 'DIR_GENERAL'])) {
         $peutValider = true;
         $niveauEnCours = 4;
     }

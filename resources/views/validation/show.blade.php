@@ -170,13 +170,13 @@
                 if ($demande->statut_demande === 'en_attente_n1' && in_array($user->code_poste, ['RESP_SERVI', 'RESPONSABLE']) && $user->code_service === $demande->employe->code_service) {
                     $afficherFormulaire = true;
                     $niveauValidationRequis = 1;
-                } elseif ($demande->statut_demande === 'en_attente_n2' && $user->code_poste === 'RH') {
+                } elseif ($demande->statut_demande === 'en_attente_n2' && $user->code_poste === 'RH' && strtoupper((string) $user->code_service) === 'RH_SERV') {
                     $afficherFormulaire = true;
                     $niveauValidationRequis = 2;
                 } elseif ($demande->statut_demande === 'en_attente_n3' && in_array($user->code_poste, ['DIR_EXPLOI', 'DIR_EXPLOITATION'])) {
                     $afficherFormulaire = true;
                     $niveauValidationRequis = 3;
-                } elseif ($demande->statut_demande === 'en_attente_n4' && in_array($user->code_poste, ['DIR_GENERA', 'DIR_GENERAL'])) {
+                } elseif ($demande->statut_demande === 'en_attente_n4' && in_array($user->code_poste, ['DG', 'DIR_GENERA', 'DIR_GENERAL'])) {
                     $afficherFormulaire = true;
                     $niveauValidationRequis = 4;
                 }
@@ -188,8 +188,9 @@
                         <h6 class="mb-0"><i class="fas fa-pen-nib me-2"></i> Poser votre Visa Décisionnel (Niveau {{ $niveauValidationRequis }})</h6>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('validations.store', $demande->code_demande) }}" method="POST">
+                        <form action="{{ route('validations.store') }}" method="POST">
                             @csrf
+                            <input type="hidden" name="code_demande" value="{{ $demande->code_demande }}">
                             <input type="hidden" name="niveau_validation" value="{{ $niveauValidationRequis }}">
 
                             <div class="mb-3">

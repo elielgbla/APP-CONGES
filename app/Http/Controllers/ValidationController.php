@@ -34,20 +34,14 @@ class ValidationController extends Controller implements HasMiddleware
                     abort(403, 'Validation impossible : L\'administrateur système possède uniquement des droits de consultation.');
                 }
 
-                // 3. Récupération du service actif du Valideur
-                $user->load(['historiquePostes' => function($q) {
-                    $q->whereNull('date_fin');
-                }]);
-                $historiqueValideur = $user->historiquePostes->first();
-                $userService = $historiqueValideur ? $historiqueValideur->code_service : null;
+                // 3. Récupération du service porté par la mutation active du valideur
+                $userService = $user->code_service;
 
                 // 4. Extraction des paramètres
                 $niveauSoumis = (int) $request->input('niveau_validation');
                 $code_demande = $request->route('code_demande') ?? $request->input('code_demande');
 
-                $demande = Demande::with(['employe.historiquePostes' => function($q) {
-                    $q->whereNull('date_fin');
-                }])->find($code_demande);
+                $demande = Demande::with('employe')->find($code_demande);
 
                 if (!$demande || !$demande->employe) {
                     abort(404, 'Demande ou employé introuvable pour vérification des droits.');
@@ -61,23 +55,25 @@ class ValidationController extends Controller implements HasMiddleware
                     abort(403, 'Opération refusée : le niveau soumis ne correspond pas à l’étape actuelle de la demande.');
                 }
 
-                $historiqueEmploye = $demande->employe->historiquePostes->first();
-                $serviceEmploye = $historiqueEmploye ? $historiqueEmploye->code_service : null;
+                $serviceEmploye = $demande->employe->code_service;
                 $posteActif = strtoupper($user->code_poste);
 
                 // 5. Application stricte des droits de validation selon le NOUVEAU circuit
                 switch ($niveauSoumis) {
                     case 1:
                         // N1 : Chef de Service (doit être du même service que le demandeur)
-                        if (!in_array($posteActif, ['RESP_SERVI', 'RESPONSABLE']) || $userService !== $serviceEmploye) {
+                        if (
+                            !in_array($posteActif, ['RESP_SERVI', 'RESPONSABLE'])
+                            || strtoupper((string) $userService) !== strtoupper((string) $serviceEmploye)
+                        ) {
                             abort(403, 'Accès interdit : Seul le Responsable de service de l\'agent peut poser le visa N1.');
                         }
                         break;
 
                     case 2:
-                        // N2 : Ressources Humaines
-                        if ($posteActif !== 'RH') {
-                            abort(403, 'Accès interdit : Seul le service RH peut poser le visa N2.');
+                        // N2 : le poste RH doit être porté par l'affectation active au service RH.
+                        if ($posteActif !== 'RH' || strtoupper((string) $userService) !== 'RH_SERV') {
+                            abort(403, 'Accès interdit : seul le responsable affecté au service RH peut poser le visa N2.');
                         }
                         break;
 
@@ -90,7 +86,7 @@ class ValidationController extends Controller implements HasMiddleware
 
                     case 4:
                         // N4 : Directeur Général (visa final)
-                        if (!in_array($posteActif, ['DIR_GENERA', 'DIR_GENERAL'])) {
+                        if (!in_array($posteActif, ['DG', 'DIR_GENERA', 'DIR_GENERAL'])) {
                             abort(403, 'Accès interdit : Seul le Directeur Général peut poser le visa final N4.');
                         }
                         break;
@@ -111,7 +107,7 @@ class ValidationController extends Controller implements HasMiddleware
      * @param string|null $code_demande (Supporte paramètre de route ou injection direct)
      * @return RedirectResponse
      */
-    public function store(Request $request, string $code_demande = null): RedirectResponse
+    public function store(Request $request, ?string $code_demande = null): RedirectResponse
     {
         // 1. Validation des inputs
         $request->validate([
@@ -140,7 +136,14 @@ class ValidationController extends Controller implements HasMiddleware
 
         // 2. Transaction pour garantir l'intégrité de la validation ET de l'audit
         DB::transaction(function () use ($demande, $userConnected, $niveau, $decisionFinale, $actionWorkflow, $request) {
-              
+            $demande = Demande::where('code_demande', $demande->code_demande)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($demande->statut_demande !== 'en_attente_n' . $niveau) {
+                abort(403, 'Cette demande a déjà changé d’étape. Actualisez la page avant de réessayer.');
+            }
+
             // A. Création du visa dans la table validation_permission (le code_validation est auto-généré par le modèle)
             Validation::create([
                 'code_demande'       => $demande->code_demande,
@@ -153,12 +156,13 @@ class ValidationController extends Controller implements HasMiddleware
 
             // B. Délégation de l'avancement (ou du rejet) au WorkflowServiceProvider
             // Cela gère automatiquement le changement de statut, la déduction des jours et la création du planning
-            app('workflow')->passerEtape(
+            $etapeAvancee = app('workflow')->passerEtape(
                 $demande->code_demande, 
                 $userConnected->matricule_employe, 
                 $actionWorkflow, 
                 $request->commentaire
             );
+            abort_unless($etapeAvancee, 403, 'Le workflow n’a pas pu faire évoluer le statut de la demande.');
 
             // C. Journalisation (Audit) de l'action
             $logId = 'LOG' . sprintf('%07d', rand(1, 9999999));

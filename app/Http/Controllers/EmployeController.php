@@ -78,6 +78,8 @@ class EmployeController extends Controller implements HasMiddleware
      */
     public function store(Request $request)
     {
+        $this->assertCanActivateAccount($request);
+
         $request->validate([
             'matricule_employe' => 'required|string|max:20|unique:employe,matricule_employe',
             'nom' => 'required|string|max:50',
@@ -152,6 +154,7 @@ class EmployeController extends Controller implements HasMiddleware
     {   
         $localites = DB::table('localite')->pluck('code_localite')->toArray();
         $employe = Employe::where('matricule_employe', $matricule_employe)->firstOrFail();
+        $this->assertCanActivateAccount($request, $employe);
 
         $request->validate([
     'nom' => 'required|string|max:50',
@@ -188,6 +191,17 @@ class EmployeController extends Controller implements HasMiddleware
         $employe->update($data);
 
         return redirect()->route('employes.index')->with('success', 'Fiche employé mise à jour avec succès.');
+    }
+
+    private function assertCanActivateAccount(Request $request, ?Employe $employe = null): void
+    {
+        if (
+            strtolower((string) $request->input('statut_compte')) === 'actif'
+            && (!$employe || strtolower((string) $employe->statut_compte) !== 'actif')
+            && strtoupper((string) Auth::user()->code_poste) !== 'ADMIN'
+        ) {
+            abort(403, 'Seul un administrateur peut activer un compte.');
+        }
     }
 
     /**

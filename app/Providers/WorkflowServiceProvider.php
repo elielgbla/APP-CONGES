@@ -111,7 +111,7 @@ class WorkflowServiceProvider extends ServiceProvider
 
                         case 'en_attente_n4':
                             // Étape 4 (Finale) : Validé par le Directeur Général
-                            if ($posteActuel === 'DIR_GENERA' || $posteActuel === 'DIR_GENERAL') {
+                            if (in_array($posteActuel, ['DG', 'DIR_GENERA', 'DIR_GENERAL'], true)) {
                                 
                                 DB::transaction(function () use ($demande, $commentaire) {
                                     // Mise à jour de la demande en statut final "approuvee"

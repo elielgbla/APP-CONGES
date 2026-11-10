@@ -161,7 +161,9 @@
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-muted text-uppercase">Statut Compte <span class="text-danger">*</span></label>
                             <select name="statut_compte" class="form-select form-select-sm @error('statut_compte') is-invalid @enderror" required>
-                                <option value="actif" {{ old('statut_compte', $employe->statut_compte) == 'actif' ? 'selected' : '' }}>Actif</option>
+                                @if (strtoupper(auth()->user()->code_poste) === 'ADMIN' || $employe->statut_compte === 'actif')
+                                    <option value="actif" {{ old('statut_compte', $employe->statut_compte) == 'actif' ? 'selected' : '' }}>Actif</option>
+                                @endif
                                 <option value="inactif" {{ old('statut_compte', $employe->statut_compte) == 'inactif' ? 'selected' : '' }}>Inactif</option>
                                 <option value="suspendu" {{ old('statut_compte', $employe->statut_compte) == 'suspendu' ? 'selected' : '' }}>Suspendu</option>
                             </select>

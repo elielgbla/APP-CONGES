@@ -24,27 +24,6 @@ return new class extends Migration
             $table->foreign('matricule_valideur')->references('matricule_employe')->on('employe');
         });
 
-        // Trigger : faire avancer le statut de la demande après validation
-        DB::unprepared('
-            CREATE TRIGGER avancer_statut_demande
-            AFTER INSERT ON validation_permission
-            FOR EACH ROW
-            BEGIN
-                IF NEW.decision = \'valide\' THEN
-                    UPDATE demande SET statut_demande =
-                        CASE NEW.niveau_validation
-                            WHEN 1 THEN \'en_attente_n2\'
-                            WHEN 2 THEN \'en_attente_n3\'
-                            WHEN 3 THEN \'en_attente_n4\'
-                            WHEN 4 THEN \'approuvee\'
-                        END
-                    WHERE code_demande = NEW.code_demande;
-                ELSEIF NEW.decision = \'rejete\' THEN
-                    UPDATE demande SET statut_demande = \'rejetee\'
-                    WHERE code_demande = NEW.code_demande;
-                END IF;
-            END
-        ');
     }
 
     public function down(): void
