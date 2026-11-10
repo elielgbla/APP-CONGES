@@ -25,10 +25,9 @@ return [
     | Compiled View Path
     |--------------------------------------------------------------------------
     */
-    // Dans config/view.php
-'compiled' => env(
-    'VIEW_COMPILED_PATH',
-    sys_get_temp_dir() // Utilise le dossier TEMP de Windows à la place de storage
-),
+    'compiled' => env(
+        'VIEW_COMPILED_PATH',
+        realpath(storage_path('framework/views')) ?: storage_path('framework/views'),
+    ),
 
 ];

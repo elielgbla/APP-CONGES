@@ -48,6 +48,10 @@ Route::middleware('reseau.local')->group(function () {
         Route::post('/reinitialiser-mot-de-passe', [ResetPasswordController::class, 'store'])->name('password.update');
     });
 
+    Route::get('/maintenance-licence', function () {
+        return view('errors.lifecycle');
+    })->name('maintenance.licence');
+
     // ============================================
     // ROUTES PROTÉGÉES — Utilisateurs Authentifiés
     // ============================================
@@ -64,7 +68,7 @@ Route::middleware('reseau.local')->group(function () {
 
         // Gestion Autonome Sécurité / Mot de passe de l'utilisateur connecté
         Route::get('/password/edit', [PasswordController::class, 'edit'])->name('password.edit');
-        Route::put('/password/update', [PasswordController::class, 'update'])->name('password.update');
+        Route::put('/password/update', [PasswordController::class, 'update'])->name('password.change');
 
         // Action d'administration (Changement par un supérieur / Admin)
         Route::put('/admin/employee/{matricule}/reset-password', [PasswordController::class, 'resetByAdmin'])->name('admin.employee.reset-password');
@@ -129,9 +133,11 @@ Route::middleware('reseau.local')->group(function () {
         ]);
 
         // Planning journalier de présence
-        Route::resource('plannings', PlanningController::class)->parameters([
-            'plannings' => 'code_planning'
-        ]);
+        Route::resource('plannings', PlanningController::class)
+            ->except(['show'])
+            ->parameters(['plannings' => 'code_planning']);
+        Route::get('/plannings/{matricule_employe}', [PlanningController::class, 'show'])
+            ->name('plannings.show');
 
         // ============================================
         // GESTION DES RÉSIDENCES & ADRESSES
@@ -148,7 +154,7 @@ Route::middleware('reseau.local')->group(function () {
 
         // Module Gestion des Localités (Réservé aux ADMIN)
         // Assurez-vous d'avoir un Gate ou middleware pour 'est-admin'
-        Route::resource('localites', LocaliteController::class)->parameters(['localite' => 'code_localite' ]);
+        Route::resource('localites', LocaliteController::class)->parameters(['localites' => 'code_localite']);
 
 
         // ============================================
@@ -164,19 +170,16 @@ Route::middleware('reseau.local')->group(function () {
             return view('auth.status');
               })->middleware('auth')->name('compte.inactif');
 
-        Route::get('/maintenance-licence', function () {
-                 return view('errors.lifecycle');
-                                     })->name('maintenance.licence');
-       
-
     Route::get('/statistiques', [StatistiqueController::class, 'index'])->name('statistiques.index');
              
       // ===========================================
         // ACCÈS RESTREINTS : GÉRÉS PAR LE CONTROLEUR (ADMIN / RH)
         // ============================================
-        Route::resource('historique_postes', HistoriquePosteController::class)->parameters([
-            'historique_postes' => 'code_historique'
-        ]);
+        Route::resource('historique_postes', HistoriquePosteController::class)
+            ->except(['show'])
+            ->parameters(['historique_postes' => 'code_historique']);
+        Route::get('/historique_postes/{matricule_employe}', [HistoriquePosteController::class, 'show'])
+            ->name('historique_postes.show');
 
     }); // Fin Middleware Auth
 }); // Fin Middleware Reseau.local

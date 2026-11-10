@@ -6,12 +6,14 @@ use App\Models\Planning;
 use App\Models\Employe;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 
-class PlanningController extends Controller
+class PlanningController extends Controller implements HasMiddleware
 {
     /**
      * Sécurisation de l'accès : Restreint à l'ADMIN uniquement
